@@ -52,7 +52,9 @@ func main() {
 {{ template "find_stub" }}
 
 {{ define "services" }}
-type {{.Name}} struct{}
+type {{.Name}} struct{
+	{{.Package}}Unimplemented{{.Name}}Server
+}
 
 {{ template "methods" .}}
 {{ end }}

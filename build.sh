@@ -7,4 +7,4 @@ fi
 
 go build ../.
 
-docker build -t "tkpd/gripmock:$1" .
+docker build --secret id=github,src=./.netrc -t "secful/gripmock:$1" .

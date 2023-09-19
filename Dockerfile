@@ -1,32 +1,19 @@
 FROM golang:alpine
 
-RUN mkdir /proto
+RUN mkdir /proto /stubs
 
-RUN mkdir /stubs
-
-RUN apk -U --no-cache add git protobuf
-
-RUN go get -u -v github.com/golang/protobuf/protoc-gen-go \
-	google.golang.org/grpc \
-	google.golang.org/grpc/reflection \
-	golang.org/x/net/context \
-	github.com/go-chi/chi \
-	github.com/lithammer/fuzzysearch/fuzzy \
-	golang.org/x/tools/imports
-
-RUN go get github.com/markbates/pkger/cmd/pkger
+# install tools (bash, git, protobuf, protoc-gen-go, protoc-grn-go-grpc, pkger)
+RUN apk -U --no-cache add bash git protobuf &&\
+    go install -v github.com/golang/protobuf/protoc-gen-go@latest &&\
+    go install -v google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest &&\
+    go install github.com/markbates/pkger/cmd/pkger@latest
 
 # cloning well-known-types
-RUN git clone https://github.com/google/protobuf.git /protobuf-repo
-
-RUN mkdir protobuf
-
-# only use needed files
-RUN mv /protobuf-repo/src/ /protobuf/
-
-RUN rm -rf /protobuf-repo
-
-RUN mkdir -p /go/src/github.com/tokopedia/gripmock
+RUN git clone https://github.com/google/protobuf.git /protobuf-repo &&\
+    mkdir protobuf &&\
+    mv /protobuf-repo/src/ /protobuf/ &&\
+    rm -rf /protobuf-repo &&\
+    mkdir -p /go/src/github.com/tokopedia/gripmock
 
 COPY . /go/src/github.com/tokopedia/gripmock
 
@@ -41,6 +28,10 @@ WORKDIR /go/src/github.com/tokopedia/gripmock
 
 # install gripmock
 RUN go install -v
+
+RUN --mount=type=secret,id=github,dst=/root/.netrc GOPRIVATE=github.com/secful go get github.com/secful/go-protobuf/salt/protobuf
+
+COPY proto /proto
 
 # remove all .pb.go generated files
 # since generating go file is part of the test
