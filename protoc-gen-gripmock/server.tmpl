@@ -9,13 +9,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	"net/http"
+	nethttp "net/http"
 
-    "github.com/golang/protobuf/jsonpb"
+	"github.com/golang/protobuf/jsonpb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	grpcstatus "google.golang.org/grpc/status"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/runtime/protoiface"
 )
@@ -163,12 +163,12 @@ func findStub(service, method string, in, out protoiface.MessageV1) error {
 		return err
 	}
 	reader := bytes.NewReader(byt)
-	resp, err := http.DefaultClient.Post(url, "application/json", reader)
+	resp, err := nethttp.DefaultClient.Post(url, "application/json", reader)
 	if err != nil {
 		return fmt.Errorf("Error request to stub server %v",err)
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != nethttp.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf(string(body))
 	}
@@ -180,9 +180,9 @@ func findStub(service, method string, in, out protoiface.MessageV1) error {
 	}
 
 	if respRPC.Code != codes.OK {
-		return status.Error(respRPC.Code, respRPC.Error)
+		return grpcstatus.Error(respRPC.Code, respRPC.Error)
 	} else if respRPC.Error != "" {
-		return status.Error(codes.Unknown, respRPC.Error)
+		return grpcstatus.Error(codes.Unknown, respRPC.Error)
 	}
 
 	data, _ := json.Marshal(respRPC.Data)
